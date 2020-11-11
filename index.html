@@ -10,7 +10,7 @@
 
 <body>
     <h1>Sign Up</h1>
-    <form id="signupForm" action="welcome.html">
+    <form id="signupForm" action="welcome.html" class="container">
         <div class="form-group">
             <label for="fName">First Name</label>
             <input type="text" name="fName" class="form-control" />
@@ -21,21 +21,21 @@
         </div>
         <fieldset class="form-group">
             <div class="row">
-              <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
-              <div class="col-sm-10">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="gender" value="m" id="genderMale" checked>
-                  <label class="form-check-label" for="genderMale">
+                <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
+                <div class="col-sm-10">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="gender" value="m" id="genderMale" checked>
+                        <label class="form-check-label" for="genderMale">
                     Male
                   </label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="gender" value="f" id="genderFemale">
-                  <label class="form-check-label" for="genderFemale">
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="gender" value="f" id="genderFemale">
+                        <label class="form-check-label" for="genderFemale">
                     Female
                   </label>
+                    </div>
                 </div>
-              </div>
             </div>
         </fieldset>
         <div class="form-group">
@@ -56,14 +56,9 @@
             <span id="longitude" class="form-control"></span>
         </div>
         <div class="form-group">
-            <label for="exampleFormControlSelect1">State</label>
-            <select id="state" name="state" class="form-control">
-                <option> Select One </option>
-                <option value="ca"> California</option>
-                <option value="ny"> New York</option>
-                <option value="tx"> Texas</option>
-            </select>
-        </div>   
+            <label for="state">State</label>
+            <select id="state" name="state" class="form-control"></select>
+        </div>
         <div class="form-group">
             <label for="county">County</label>
             <select id="county" name="county" class="form-control"></select>
@@ -87,87 +82,114 @@
         <button type="submit" class="btn btn-primary">Sign Up!</button>
     </form>
     <script>
-        let usernameAvailable = false;
-        
-        $("#zip").on("change", async function() {
-            let zipCode = $("#zip").val();
-            let url = `https://cst336.herokuapp.com/projects/api/cityInfoAPI.php?zip=${zipCode}`;
-            let response = await fetch(url);
-            let data = await response.json();
+        $(document).ready(function() {
+            let usernameAvailable = false;
             
-            if (data) {
-                $("#city").html(data.city);
-                $("#latitude").html(data.latitude);
-                $("#longitude").html(data.longitude);
-            } else {
-                $("#zipError").html("Zip code not found");
-                $("#zipError").css("color", "red");
-            }
-        });
+            // get state dropdown options
+            async function getStateOptions() {
+                let url = 'https://cst336.herokuapp.com/projects/api/state_abbrAPI.php';
+                let response = await fetch(url);
+                let data = await response.json();
 
-        $("#state").on("change", async function() {
-            let state = $("#state").val();
-            let url = `https://cst336.herokuapp.com/projects/api/countyListAPI.php?state=${state}`
-            let response = await fetch(url);
-            let data = await response.json();
-            
-            if (data) {
-                $("#county").empty();
-                data.forEach(function(i) {
-                    $("#county").append(`<option> ${i.county} </option>`);
-                });   
+                if (data) {
+                    data.forEach(function(i) {
+                        $("#state").append(`<option value=${i.usps}> ${i.state} </option>`);
+                    });
+                    
+                    getCountyOptions();
+                }
             }
-        });
+            
+            async function getCountyOptions() {
+                let state = $("#state option:selected").val();
+                
+                console.log(state)
+                let url = `https://cst336.herokuapp.com/projects/api/countyListAPI.php?state=${state}`
+                let response = await fetch(url);
+                let data = await response.json();
 
-        $("#username").on("change", async function() {
-            let username = $("#username").val();
-            let url = `https://cst336.herokuapp.com/projects/api/usernamesAPI.php?username=${username}`
-            let response = await fetch(url);
-            let data = await response.json();
+                if (data) {
+                    $("#county").empty();
+                    data.forEach(function(i) {
+                        $("#county").append(`<option> ${i.county} </option>`);
+                    });
+                }
+            }
+        
+            getStateOptions();
+            
+            getCountyOptions();
 
-            if (data.available) {
-                $("#usernameError").html("Username available!");
-                $("#usernameError").css("color", "green");
-                usernameAvailable = true;
-            }
-            else {
-                $("#usernameError").html("Username not available!");
-                $("#usernameError").css("color", "red");
-                usernameAvailable = false;
+            $("#zip").on("change", async function() {
+                let zipCode = $("#zip").val();
+                let url = `https://cst336.herokuapp.com/projects/api/cityInfoAPI.php?zip=${zipCode}`;
+                let response = await fetch(url);
+                let data = await response.json();
+
+                if (data) {
+                    $("#city").html(data.city);
+                    $("#latitude").html(data.latitude);
+                    $("#longitude").html(data.longitude);
+                }
+                else {
+                    $("#zipError").html("Zip code not found");
+                    $("#zipError").css("color", "red");
+                }
+            });
+
+            $("#state").on("change", getCountyOptions);
+
+            $("#username").on("change", async function() {
+                let username = $("#username").val();
+                let url = `https://cst336.herokuapp.com/projects/api/usernamesAPI.php?username=${username}`
+                let response = await fetch(url);
+                let data = await response.json();
+
+                if (data.available) {
+                    $("#usernameError").html("Username available!");
+                    $("#usernameError").css("color", "green");
+                    usernameAvailable = true;
+                }
+                else {
+                    $("#usernameError").html("Username not available!");
+                    $("#usernameError").css("color", "red");
+                    usernameAvailable = false;
+                }
+            });
+
+            $("#signupForm").on("submit", function() {
+                if (!isFormValid()) {
+                    event.preventDefault();
+                }
+            });
+
+            function isFormValid() {
+                isValid = true;
+                if (!usernameAvailable) {
+                    isValid = false;
+                }
+
+                if ($("#username").val().length == 0) {
+                    isValid = false;
+                    $("#usernameError").html("Username is required");
+                    $("#usernameError").css("color", "red");
+                }
+
+                if ($("#password").val() != $("#passwordAgain").val()) {
+                    $("#passwordAgainError").html("Password mismatch!");
+                    $("#passwordAgainError").css("color", "red");
+                    isValid = false;
+                }
+
+                if ($("#password").val().length < 6) {
+                    isValid = false;
+                    $("#passwordError").html("Password must contain at least 6 characters.");
+                    $("#passwordError").css("color", "red");
+                }
+
+                return isValid;
             }
         });
-        
-        $("#signupForm").on("submit", function() {
-            if (!isFormValid()) {
-                event.preventDefault();   
-            }
-        });
-        
-        function isFormValid() {
-            isValid = true;
-            if (!usernameAvailable) {
-                isValid = false;
-            }
-            
-            if ($("#username").val().length == 0) {
-                isValid = false;
-                $("#usernameError").html("Username is required");
-            }
-            
-            if ($("#password").val() != $("#passwordAgain").val()) {
-                $("#passwordAgainError").html("Password mismatch!");
-                $("#passwordAgainError").css("color", "red");
-                isValid = false;
-            }
-            
-            if ($("#password").val().length < 6) {
-                isValid = false;
-                $("#passwordError").html("Password must contain at least 6 characters.");
-                $("#passwordError").css("color", "red");
-            }
-            
-            return isValid;
-        }
     </script>
 </body>
 
