@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sign Up Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/styles.css" type="text/css" />
+</head>
+
+<body>
+    <h1>Sign Up</h1>
+    <form id="signupForm" action="welcome.html">
+        <div class="form-group">
+            <label for="fName">First Name</label>
+            <input type="text" name="fName" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="lName">Last Name</label>
+            <input type="text" name="lName" class="form-control" />
+        </div>
+        <fieldset class="form-group">
+            <div class="row">
+              <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
+              <div class="col-sm-10">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="gender" value="m" id="genderMale" checked>
+                  <label class="form-check-label" for="genderMale">
+                    Male
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="gender" value="f" id="genderFemale">
+                  <label class="form-check-label" for="genderFemale">
+                    Female
+                  </label>
+                </div>
+              </div>
+            </div>
+        </fieldset>
+        <div class="form-group">
+            <label for="zip">Zip Code</label>
+            <input type="text" id="zip" name="zip" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="city">City</label>
+            <span id="city" class="form-control"></span>
+        </div>
+        <div class="form-group">
+            <label for="latitude">Latitude</label>
+            <span id="latitude" class="form-control"></span>
+        </div>
+        <div class="form-group">
+            <label for="longitude">Longitude</label>
+            <span id="longitude" class="form-control"></span>
+        </div>
+        <div class="form-group">
+            <label for="exampleFormControlSelect1">State</label>
+            <select id="state" name="state" class="form-control">
+                <option> Select One </option>
+                <option value="ca"> California</option>
+                <option value="ny"> New York</option>
+                <option value="tx"> Texas</option>
+            </select>
+        </div>   
+        <div class="form-group">
+            <label for="county">County</label>
+            <select id="county" name="county" class="form-control"></select>
+        </div>
+        <div class="form-group">
+            <label for="zip">Desired Name</label>
+            <input type="text" id="username" name="username" class="form-control" />
+            <span id="usernameError"></span>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" class="form-control">
+            <span id="passwordError"></span><br/>
+        </div>
+        <div class="form-group">
+            <label for="passwordAgain">Password Again</label>
+            <input type="password" id="passwordAgain" class="form-control">
+            <span id="passwordAgainError"></span><br/>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Sign Up!</button>
+    </form>
+    <script>
+        let usernameAvailable = false;
+        
+        $("#zip").on("change", async function() {
+            let zipCode = $("#zip").val();
+            let url = `https://cst336.herokuapp.com/projects/api/cityInfoAPI.php?zip=${zipCode}`;
+            let response = await fetch(url);
+            let data = await response.json();
+
+            $("#city").html(data.city);
+            $("#latitude").html(data.latitude);
+            $("#longitude").html(data.longitude);
+        });
+
+        $("#state").on("change", async function() {
+            let state = $("#state").val();
+            let url = `https://cst336.herokuapp.com/projects/api/countyListAPI.php?state=${state}`
+            let response = await fetch(url);
+            let data = await response.json();
+
+            data.forEach(function(i) {
+                $("#county").append(`<option> ${i.county} </option>`);
+            });
+        });
+
+        $("#username").on("change", async function() {
+            let username = $("#username").val();
+            let url = `https://cst336.herokuapp.com/projects/api/usernamesAPI.php?username=${username}`
+            let response = await fetch(url);
+            let data = await response.json();
+
+            if (data.available) {
+                $("#usernameError").html("Username available!");
+                $("#usernameError").css("color", "green");
+                usernameAvailable = true;
+            }
+            else {
+                $("#usernameError").html("Username not available!");
+                $("#usernameError").css("color", "red");
+                usernameAvailable = false;
+            }
+        });
+        
+        $("#signupForm").on("submit", function() {
+            if (!isFormValid()) {
+                event.preventDefault();   
+            }
+        });
+        
+        function isFormValid() {
+            isValid = true;
+            if (!usernameAvailable) {
+                isValid = false;
+            }
+            
+            if ($("#username").val().length == 0) {
+                isValid = false;
+                $("#usernameError").html("Username is required");
+            }
+            
+            if ($("#password").val() != $("#passwordAgain").val()) {
+                $("#passwordAgainError").html("Password mismatch!");
+                $("#passwordAgainError").css("color", "red");
+                isValid = false;
+            }
+            
+            if ($("#password").val().length < 6) {
+                isValid = false;
+                $("#passwordError").html("Password must contain at least 6 characters.");
+                $("#passwordError").css("color", "red");
+            }
+            
+            return isValid;
+        }
+    </script>
+</body>
+
+</html>
